@@ -23,7 +23,7 @@ class RealEstateAdd(models.Model):
     localisation = models.CharField(max_length=300)
     wilaya = models.CharField(max_length=50)
     commune = models.CharField(max_length=50)
-    owner = models.ForeignKey(User,on_delete=models.CASCADE)
+    owner = models.ForeignKey(User,on_delete=models.CASCADE, related_name='ownedRea')
     #Add for later : ImageFiled + Choices for category and type
 
     def __str__(self):
@@ -33,8 +33,8 @@ class RealEstateAdd(models.Model):
 class Offer(models.Model):
     description = models.TextField()
     proposal = models.FloatField()
-    offerer = models.ForeignKey(User,on_delete=models.CASCADE)
-    real_estate = models.ForeignKey(RealEstateAdd,on_delete=models.CASCADE)
+    offerer = models.ForeignKey(User,on_delete=models.CASCADE, related_name='offers')
+    real_estate = models.ForeignKey(RealEstateAdd,on_delete=models.CASCADE, related_name='offerers')
     
     def __str__(self):
         return self.description
