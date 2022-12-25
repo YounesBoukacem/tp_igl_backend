@@ -18,7 +18,7 @@ class UserAdmin(admin.ModelAdmin):
 
 class RealEstateAddAdmin(admin.ModelAdmin):
     list_display=('__str__','id')
-    readonly_fields=('id',)
+    readonly_fields=('id','pub_date')
     inlines = [OfferInLine]
 
 class OfferAdmin(admin.ModelAdmin):
