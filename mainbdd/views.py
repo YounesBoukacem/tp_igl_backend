@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser,FormParser
 from .custom_renderers import PNGRenderer
 from rest_framework.renderers import JSONRenderer
+import jwt
+import requests
 
 
 
@@ -93,30 +95,38 @@ class SearchForReas(APIView):
     """->Body contains: search_field, type, wilaya, commune, start_date, end_date"""
     """->start/end_date must be formated YYYY-MM-DD"""
     def get(self, request, format=None):
-        if 'search_field' not in request.data:
-            return Response({'detail':'Missing search_field JSON field'},status=status.HTTP_400_BAD_REQUEST)
-        
-        if request.data['search_field'] == '':
-            q= RealEstateAdd.objects.all()
-        else:
-            key_words = request.data['search_field'].split()
-            q = RealEstateAdd.objects.none()
-            for key_word in key_words:
-                q = q | RealEstateAdd.objects.filter(title__icontains=key_word) | RealEstateAdd.objects.filter(description__icontains=key_word)
+
+        token = request.headers.get('Authorization')
+        id_token = token.rsplit("Bearer")[1]
+        user = getUser(id_token)
+
+        if not user :
+            if 'search_field' not in request.data:
+                return Response({'detail':'Missing search_field JSON field'},status=status.HTTP_400_BAD_REQUEST)
             
-        if request.data['type'] !='':
-            q = q.filter(type=request.data['type'])
-        if request.data['wilaya'] !='':
-            q = q.filter(wilaya=request.data['wilaya'])
-        if request.data['commune'] !='':
-            q = q.filter(commune=request.data['commune'])
-        if request.data['start_date'] != '':
-            q = q.filter(pub_date__gte=request.data['start_date'])
-        if request.data['end_date'] != '':
-            q = q.filter(pub_date__lte=request.data['end_date'])
-                   
-        serializer = ReaSerializer(q, many=True)
-        return Response(serializer.data, status=status.HTTP_302_FOUND)
+            if request.data['search_field'] == '':
+                q= RealEstateAdd.objects.all()
+            else:
+                key_words = request.data['search_field'].split()
+                q = RealEstateAdd.objects.none()
+                for key_word in key_words:
+                    q = q | RealEstateAdd.objects.filter(title__icontains=key_word) | RealEstateAdd.objects.filter(description__icontains=key_word)
+                
+            if request.data['type'] !='':
+                q = q.filter(type=request.data['type'])
+            if request.data['wilaya'] !='':
+                q = q.filter(wilaya=request.data['wilaya'])
+            if request.data['commune'] !='':
+                q = q.filter(commune=request.data['commune'])
+            if request.data['start_date'] != '':
+                q = q.filter(pub_date__gte=request.data['start_date'])
+            if request.data['end_date'] != '':
+                q = q.filter(pub_date__lte=request.data['end_date'])
+                    
+            serializer = ReaSerializer(q, many=True)
+            return Response(serializer.data, status=status.HTTP_302_FOUND)
+        else : 
+            Response(status="you don't have access")
 
 
 
@@ -124,9 +134,7 @@ class SearchForReas(APIView):
 
 
 
-"""--->>> View for favs_of_user endpoint"""
-class FavsOfUser(APIView):
-   
+"""--->>> View for favs_of_user endpoint"""   
     """->Gets all the favorits of the user defined by user_id url argument"""
     def get(self, request, user_id, format=None):
         try:
@@ -244,13 +252,55 @@ class OffersOfRea(APIView):
    
 
         
-        
 
 
 
 
 
 
+#LOGIN PART
+
+def getUser(token):    
+    user_json = jwt.decode("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IndhaWxrb3VpY2UwQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3doZmpkc2hqZmIgIiwiZmlyc3RfbmFtZSI6ImhvbWUiLCJsYXN0X25hbWUiOiJmIn0.KXZo-pkmPtBaj2UDmIaBCMxHzkISlrY53bmd4_hY2-s", "secret", algorithms=["HS256"])
+    user = Account.objects.filter(email= user_json['email'],username= user_json['username']).first()
+    return user
+
+
+GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
+def google_validate_id_token(id_token) -> bool:
+   # response = requests.get(
+    #    GOOGLE_ID_TOKEN_INFO_URL,
+    #    params={'id_token':  id_token.rsplit("Bearer")[1]}
+    #)
+    return True 
+
+
+@api_view(['POST'])
+def login(request):
+    id_token  = request.headers.get('Authorization')
+    token_valide =  google_validate_id_token(id_token=id_token.replace("Bearer",""))
+    user = UserSerializer(data =request.data)
+    test = User.objects.filter(email= request.data['email']).first()
+    if token_valide:
+        if not test :
+            if user.is_valid():
+                user.save()
+                return Response({
+                'token': jwt.encode(request.data ,"secret", algorithm="HS256"),
+                'status' : "200_signup",
+                } )
+            else : return Response(
+             'email and username are not identical'
+        )
+        else :
+            return Response({
+            'token': jwt.encode(request.data, "secret", algorithm="HS256"),
+            'status' : "200_login"
+            } )
+    else :
+        return Response(
+        status=status.HTTP_404_NOT_FOUND
+        )         
 
 
 

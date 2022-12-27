@@ -2,18 +2,25 @@ from django.db import models
 from django.contrib import admin
 from django.dispatch import receiver
 import os
+from django.contrib.auth.models import AbstractBaseUser
+
 
 
 def upload_to(instance, filename):
     return 'posts/{filename}'.format(filename=filename)
 
 
-class User (models.Model):
+class User (AbstractBaseUser):
+    password = None
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     email = models.EmailField(blank=True)
-    phone_num = models.CharField(max_length=30)
+    phone_num = models.CharField(max_length=30 ,blank = True, null=True)
     favorits = models.ManyToManyField('RealEstateAdd')
+
+    
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['username']
 
 
     def __str__(self):
