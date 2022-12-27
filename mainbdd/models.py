@@ -1,5 +1,12 @@
 from django.db import models
 from django.contrib import admin
+from django.dispatch import receiver
+import os
+
+
+def upload_to(instance, filename):
+    return 'posts/{filename}'.format(filename=filename)
+
 
 class User (models.Model):
     first_name = models.CharField(max_length=50)
@@ -30,6 +37,19 @@ class RealEstateAdd(models.Model):
     def __str__(self):
         return self.title
 
+class Photo(models.Model):
+    rea = models.ForeignKey(RealEstateAdd, on_delete=models.CASCADE, related_name='photos', null=True)
+    photo = models.ImageField(upload_to=upload_to, default='posts/default.jpg')
+
+@receiver(models.signals.post_delete, sender=Photo)
+def auto_delete_file_on_delete(sender, instance, **kwargs):
+    """
+    Deletes file from filesystem
+    when corresponding `MediaFile` object is deleted.
+    """
+    if instance.photo:
+        if os.path.isfile(instance.photo.path):
+            os.remove(instance.photo.path)
 
 class Offer(models.Model):
     description = models.TextField()

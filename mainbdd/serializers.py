@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import User, RealEstateAdd, Offer
+from .models import User, RealEstateAdd, Offer, Photo
+
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -9,14 +10,61 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id','first_name','last_name','email','phone_num']
 
 
+class PhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Photo
+        fields = ['id','rea','photo']
+
 class ReaSerializer(serializers.ModelSerializer):
+    photos = PhotoSerializer(many=True)
     class Meta:
         model = RealEstateAdd
         fields = ['id','title','description','category','type','surface',
-        'price','pub_date','localisation','wilaya','commune','owner']
+        'price','pub_date','localisation','wilaya','commune','owner','photos']
 
 
 class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
-        fields = ['description','proposal','offerer','real_estate']
+        fields = ['id','description','proposal','offerer','real_estate']
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#class ProfileSerializer(serializers.ModelSerializer):    
+#     class Meta:
+#         model = Profile
+#         fields = ['name','age']
+
+
+# class PhotoSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Photo
+#         fields = ['photo','rea']
