@@ -12,6 +12,7 @@ def upload_to(instance, filename):
 
 class User (AbstractBaseUser):
     password = None
+    username = models.CharField(max_length=50,unique = True , )
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     picture = models.CharField(max_length=200 , blank = True, null=True)

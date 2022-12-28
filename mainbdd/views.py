@@ -297,7 +297,8 @@ def login(request):
         "first_name": claims["given_name"] ,
         "last_name":claims["family_name"] ,
         "email":claims["email"],
-        "picture":claims["picture"]
+        "picture":claims["picture"],
+        'username':claims["name"]
         }
     except RealEstateAdd.DoesNotExist:
         token_valide = False
