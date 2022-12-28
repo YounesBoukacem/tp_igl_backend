@@ -90,12 +90,12 @@ class ReasOfUser(APIView):
 
 """--->>>View for the search_for_reas endpoint"""          
 class SearchForReas(APIView):
-    
+
     """->Gets all the reas corresponding to the search criteria"""
     """->Body contains: search_field, type, wilaya, commune, start_date, end_date"""
     """->start/end_date must be formated YYYY-MM-DD"""
     def get(self, request, format=None):
-
+        
         token = request.headers.get('Authorization')
         id_token = token.rsplit("Bearer")[1]
         user = getUser(id_token)
@@ -126,7 +126,7 @@ class SearchForReas(APIView):
             serializer = ReaSerializer(q, many=True)
             return Response(serializer.data, status=status.HTTP_302_FOUND)
         else : 
-            Response(status="you don't have access")
+            return Response(status="you don't have access")
 
 
 
@@ -135,6 +135,7 @@ class SearchForReas(APIView):
 
 
 """--->>> View for favs_of_user endpoint"""   
+class FavsOfUser(APIView):
     """->Gets all the favorits of the user defined by user_id url argument"""
     def get(self, request, user_id, format=None):
         try:
