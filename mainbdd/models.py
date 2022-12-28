@@ -14,6 +14,7 @@ class User (AbstractBaseUser):
     password = None
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
+    picture = models.CharField(max_length=200 , blank = True, null=True)
     email = models.EmailField(blank=True)
     phone_num = models.CharField(max_length=30 ,blank = True, null=True)
     favorits = models.ManyToManyField('RealEstateAdd')

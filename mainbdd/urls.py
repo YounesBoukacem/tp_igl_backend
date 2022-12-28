@@ -5,7 +5,7 @@ from . import views
 
 
 urlpatterns=[
-    path('test/', views.google_validate_id_token),
+   # path('test/', views.userr),
     path('auth/', views.login),
     path('user_detail/<int:user_id>/', views.UserDetail.as_view()),
     path('post_rea/<int:user_id>/', views.PostRea.as_view()),

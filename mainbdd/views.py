@@ -11,6 +11,11 @@ from .custom_renderers import PNGRenderer
 from rest_framework.renderers import JSONRenderer
 import jwt
 import requests
+from google.oauth2.credentials import Credentials 
+from google.auth.transport.requests import Request
+from google.auth import jwt as gjwt 
+
+
 
 
 
@@ -261,33 +266,55 @@ class OffersOfRea(APIView):
 
 #LOGIN PART
 
-def getUser(token):    
-    user_json = jwt.decode("eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6IndhaWxrb3VpY2UwQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoic3doZmpkc2hqZmIgIiwiZmlyc3RfbmFtZSI6ImhvbWUiLCJsYXN0X25hbWUiOiJmIn0.KXZo-pkmPtBaj2UDmIaBCMxHzkISlrY53bmd4_hY2-s", "secret", algorithms=["HS256"])
+
+
+
+
+
+
+
+
+
+def getUser(token): 
+    id_token = token.rsplit("Bearer ")[1]   
+    user_json = jwt.decode(id_token,"secret", algorithms=["HS256"])
     user = Account.objects.filter(email= user_json['email'],username= user_json['username']).first()
     return user
 
 
-GOOGLE_ID_TOKEN_INFO_URL = 'https://www.googleapis.com/oauth2/v3/tokeninfo'
-def google_validate_id_token(id_token) -> bool:
-   # response = requests.get(
-    #    GOOGLE_ID_TOKEN_INFO_URL,
-    #    params={'id_token':  id_token.rsplit("Bearer")[1]}
-    #)
-    return True 
+
 
 
 @api_view(['POST'])
 def login(request):
-    id_token  = request.headers.get('Authorization')
-    token_valide =  google_validate_id_token(id_token=id_token.replace("Bearer",""))
-    user = UserSerializer(data =request.data)
-    test = User.objects.filter(email= request.data['email']).first()
+    token  = request.headers.get('Authorization')
+    id_token = token.rsplit("Bearer ")[1]
+
+    try:
+        claims = jwt.decode(id_token, verify=False) 
+        token_valide = True
+        user_data = {
+        "first_name": claims["given_name"] ,
+        "last_name":claims["family_name"] ,
+        "email":claims["email"],
+        "picture":claims["picture"]
+        }
+    except RealEstateAdd.DoesNotExist:
+        token_valide = False
+        return Response({'detail':'token not valid'},status=status.HTTP_404_NOT_FOUND)
+    
+
+    
+
+    user = UserSerializer(data =user_data)
+    test = User.objects.filter(email= user_data["email"]).first()
+
     if token_valide:
         if not test :
             if user.is_valid():
                 user.save()
                 return Response({
-                'token': jwt.encode(request.data ,"secret", algorithm="HS256"),
+                'token': jwt.encode(user_data ,"secret", algorithm="HS256"),
                 'status' : "200_signup",
                 } )
             else : return Response(
@@ -295,7 +322,7 @@ def login(request):
         )
         else :
             return Response({
-            'token': jwt.encode(request.data, "secret", algorithm="HS256"),
+            'token': jwt.encode(user_data, "secret", algorithm="HS256"),
             'status' : "200_login"
             } )
     else :
