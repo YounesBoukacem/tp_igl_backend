@@ -7,7 +7,7 @@ from . import views
 urlpatterns=[
    # path('test/', views.userr),
     path('auth/', views.login),
-    path('user_detail/<int:user_id>/', views.UserDetail.as_view()),
+    path('user_detail/', views.UserDetail.as_view()),
     path('post_rea/<int:user_id>/', views.PostRea.as_view()),
     path('reas_of_user/<int:user_id>/', views.ReasOfUser.as_view()),
     path('favs_of_user/<int:user_id>/', views.FavsOfUser.as_view()),

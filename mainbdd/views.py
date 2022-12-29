@@ -20,9 +20,12 @@ from google.auth import jwt as gjwt
 
 
 class UserDetail(APIView):
-    def get(self, request, user_id, format=None):
+    def get(self, request, format=None):
+
+        id_token  = request.headers.get('Authorization')
+        
         try:
-            user = User.objects.get(pk=user_id)
+            user = getUser(id_token)
         except User.DoesNotExist:
             return Response(status=status.HTTP_404_NOT_FOUND)
         
@@ -278,7 +281,7 @@ class OffersOfRea(APIView):
 def getUser(token): 
     id_token = token.rsplit("Bearer ")[1]   
     user_json = jwt.decode(id_token,"secret", algorithms=["HS256"])
-    user = Account.objects.filter(email= user_json['email'],username= user_json['username']).first()
+    user = User.objects.filter(email= user_json['email']).first()
     return user
 
 
