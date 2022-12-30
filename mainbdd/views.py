@@ -26,8 +26,9 @@ class UserDetail(APIView):
         
         try:
             user = getUser(id_token)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
         
         serializer = UserSerializer(user)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
@@ -46,11 +47,21 @@ class PostRea(APIView):
     
     """->Posts a rea for the user defined by the user_id url agrument"""
     """->Body contains: uploaded_photos, title, description, ... RealEstateAdd Model fields"""
-    def post(self, request, user_id, format=None):
+    def post(self, request, format=None):
         files = request.FILES.getlist('uploaded_photos')
         if files:
             request.data.pop('uploaded_photos')
-        request.data['owner']=user_id
+
+
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
+
+        request.data['owner'] = user.id
         serializer = ReaSerializer(data=request.data, partial=True)
         if serializer.is_valid():
             rea = serializer.save()
@@ -64,24 +75,31 @@ class PostRea(APIView):
 """--->>> View for reas_of_user endpoint"""
 class ReasOfUser(APIView):
     
-    #Utilitary function
-    def get_user(self,user_id):
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-        return user
-
+   
     """->Gets all the reas of user defined by user_id url argument"""
-    def get(self, request, user_id, format=None):
-        user = self.get_user(user_id)
+    def get(self, request, format=None):
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
         reasOfUser = user.ownedReas.all()
         serializer = ReaSerializer(reasOfUser, many=True)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
     
     """->Delete a rea from the owned reas of user defined by user_id url argument"""
     """->Body contains: rea_to_delete_id"""
-    def delete(self, request, user_id, format=None):
+    def delete(self, request, format=None):
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
         if 'rea_to_delete_id' not in request.data:
             return Response({'detail':'Missing rea_to_delete_id field'},status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -89,7 +107,7 @@ class ReasOfUser(APIView):
         except RealEstateAdd.DoesNotExist:
             return Response({'detail':'Rea does not exit'},status=status.HTTP_404_NOT_FOUND)
         
-        if rea.owner.id != user_id:
+        if rea.owner.id != user.id:
             return Response({'detail':'Rea is not owned by user'},status=status.HTTP_400_BAD_REQUEST)
         
         rea.delete()
@@ -103,38 +121,41 @@ class SearchForReas(APIView):
     """->Body contains: search_field, type, wilaya, commune, start_date, end_date"""
     """->start/end_date must be formated YYYY-MM-DD"""
     def get(self, request, format=None):
-        
-        token = request.headers.get('Authorization')
-        id_token = token.rsplit("Bearer")[1]
-        user = getUser(id_token)
 
-        if not user :
-            if 'search_field' not in request.data:
-                return Response({'detail':'Missing search_field JSON field'},status=status.HTTP_400_BAD_REQUEST)
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
+        
+        if 'search_field' not in request.data:
+            return Response({'detail':'Missing search_field JSON field'},status=status.HTTP_400_BAD_REQUEST)
             
-            if request.data['search_field'] == '':
-                q= RealEstateAdd.objects.all()
-            else:
-                key_words = request.data['search_field'].split()
-                q = RealEstateAdd.objects.none()
-                for key_word in key_words:
-                    q = q | RealEstateAdd.objects.filter(title__icontains=key_word) | RealEstateAdd.objects.filter(description__icontains=key_word)
+        if request.data['search_field'] == '':
+            q= RealEstateAdd.objects.all()
+        else:
+            key_words = request.data['search_field'].split()
+            q = RealEstateAdd.objects.none()
+            for key_word in key_words:
+                q = q | RealEstateAdd.objects.filter(title__icontains=key_word) | RealEstateAdd.objects.filter(description__icontains=key_word)
                 
-            if request.data['type'] !='':
-                q = q.filter(type=request.data['type'])
-            if request.data['wilaya'] !='':
-                q = q.filter(wilaya=request.data['wilaya'])
-            if request.data['commune'] !='':
-                q = q.filter(commune=request.data['commune'])
-            if request.data['start_date'] != '':
-                q = q.filter(pub_date__gte=request.data['start_date'])
-            if request.data['end_date'] != '':
-                q = q.filter(pub_date__lte=request.data['end_date'])
+        if request.data['type'] !='':
+            q = q.filter(type=request.data['type'])
+        if request.data['wilaya'] !='':
+            q = q.filter(wilaya=request.data['wilaya'])
+        if request.data['commune'] !='':
+            q = q.filter(commune=request.data['commune'])
+        if request.data['start_date'] != '':
+            q = q.filter(pub_date__gte=request.data['start_date'])
+        if request.data['end_date'] != '':
+            q = q.filter(pub_date__lte=request.data['end_date'])
                     
-            serializer = ReaSerializer(q, many=True)
-            return Response(serializer.data, status=status.HTTP_302_FOUND)
-        else : 
-            return Response(status="you don't have access")
+        serializer = ReaSerializer(q, many=True)
+        return Response(serializer.data, status=status.HTTP_302_FOUND)
+        
 
 
 
@@ -145,23 +166,26 @@ class SearchForReas(APIView):
 """--->>> View for favs_of_user endpoint"""   
 class FavsOfUser(APIView):
     """->Gets all the favorits of the user defined by user_id url argument"""
-    def get(self, request, user_id, format=None):
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
+    def get(self, request, format=None):
 
+        id_token  = request.headers.get('Authorization')
+
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
         favsOfUser = user.favorits.all()
         serializer = ReaSerializer(favsOfUser, many=True)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
     
     """->Registers a new favorit for the user defined by user_id url argument"""
     """->Body contains: rea_id"""
-    def post(self, request, user_id, format=None):
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response({'detail':'User was not found'},status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request, format=None):
+
+        id_token  = request.headers.get('Authorization')
+        user = getUser(id_token)
         
         if 'rea_id' not in request.data:
             return Response({'detail':'rea_id missing in request body'},status=status.HTTP_400_BAD_REQUEST)
@@ -179,9 +203,10 @@ class FavsOfUser(APIView):
     """->Removes a rea from favorits of user defined by user_id url argument"""
     """->Body contains: rea_id"""
     def delete(self, request, user_id, format=None):
+        id_token  = request.headers.get('Authorization')
         try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
             return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
         
         if 'rea_id' not in request.data:
@@ -204,11 +229,13 @@ class FavsOfUser(APIView):
 """--->>> View for offers_made_by_user endpoint"""
 class OffersMadeByUser(APIView):
     """->Gets all the offers made by the user defined by user_id"""
-    def get(self, request, user_id, format=None):
+    def get(self, request, format=None):
+        id_token  = request.headers.get('Authorization')
         try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
         
         offers = Offer.objects.filter(offerer=user)
         serializer = OfferSerializer(offers, many=True)
@@ -219,28 +246,30 @@ class OffersMadeByUser(APIView):
 class PostingOffer(APIView):
     
     """->Posts a new offers for the rea definde by rea_id url terminal"""
-    """->Body contains : description, proposal, offerer_id """
+    """->Body contains : description, proposal"""
     def post(self, request, rea_id, format=None):
+
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        
         try:
             rea = RealEstateAdd.objects.get(pk=rea_id)
         except RealEstateAdd.DoesNotExist:
             return Response({'detail':'Rea of rea_id not found'},status=status.HTTP_404_NOT_FOUND)
         
-        if  'description' not in request.data or 'proposal' not in request.data or 'offerer_id' not in request.data:
+        if  'description' not in request.data or 'proposal' not in request.data:
             return Response({'detail':'fields missing in request body'}, status=status.HTTP_400_BAD_REQUEST)
-        if request.data['offerer_id']=='':
-            return Response({'detail':'offerer_id must be provided'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        try:
-            user = User.objects.get(pk=request.data['offerer_id'])
-        except RealEstateAdd.DoesNotExist:
-            return Response({'detail':'User of offerer_id not found'}, status=status.HTTP_404_NOT_FOUND)
         offer = Offer(
                 description=request.data['description'],
                 proposal=request.data['proposal'],
                 offerer=user,
                 real_estate=rea).save()
-        serializer = OfferSerializer(offer)        
+        serializer = OfferSerializer(offer)      
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -249,6 +278,13 @@ class OffersOfRea(APIView):
     
     """->Gets the offers related to the rea defined by rea_id"""
     def get(self, request, rea_id, format=None):
+
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+        
         try:
             rea = RealEstateAdd.objects.get(pk=rea_id)
         except RealEstateAdd.DoesNotExist:
@@ -269,19 +305,14 @@ class OffersOfRea(APIView):
 
 #LOGIN PART
 
-
-
-
-
-
-
-
-
-
 def getUser(token): 
     id_token = token.rsplit("Bearer ")[1]   
     user_json = jwt.decode(id_token,"secret", algorithms=["HS256"])
-    user = User.objects.filter(email= user_json['email']).first()
+    try :
+        user = User.objects.filter(email= user_json['email']).first()
+    except User.DoesNotExist:
+        raise User.DoesNotExist
+
     return user
 
 

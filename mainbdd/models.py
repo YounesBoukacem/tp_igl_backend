@@ -12,11 +12,11 @@ def upload_to(instance, filename):
 
 class User (AbstractBaseUser):
     password = None
-    username = models.CharField(max_length=50,unique = True , )
+    username = models.CharField(max_length=50,unique = True )
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     picture = models.CharField(max_length=200 , blank = True, null=True)
-    email = models.EmailField(blank=True)
+    email = models.EmailField(blank=True,)
     phone_num = models.CharField(max_length=30 ,blank = True, null=True)
     favorits = models.ManyToManyField('RealEstateAdd')
 
