@@ -16,7 +16,7 @@ class User (AbstractBaseUser):
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
     picture = models.CharField(max_length=200 , blank = True, null=True)
-    email = models.EmailField(blank=True,)
+    email = models.EmailField(blank=True,unique=True)
     phone_num = models.CharField(max_length=30 ,blank = True, null=True)
     favorits = models.ManyToManyField('RealEstateAdd')
 
@@ -38,6 +38,8 @@ class RealEstateAdd(models.Model):
     price = models.FloatField(null=True)
     pub_date = models.DateField(auto_now_add=True)
     localisation = models.CharField(max_length=300)
+    longitude = models.FloatField(null=True)
+    latitude = models.FloatField(null=True)
     wilaya = models.CharField(max_length=50)
     commune = models.CharField(max_length=50)
     owner = models.ForeignKey(User,on_delete=models.CASCADE, related_name='ownedReas')

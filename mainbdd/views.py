@@ -157,6 +157,17 @@ class SearchForReas(APIView):
         return Response(serializer.data, status=status.HTTP_302_FOUND)
         
 
+"""--->>> View for rea_of_id endpoint"""
+class ReaOfId(APIView):
+    
+    def get(self, request, rea_id, format=None):
+        try:
+            rea = RealEstateAdd.objects.get(pk=rea_id)
+        except RealEstateAdd.DoesNotExist:
+            return Response({'detail':'Rea does not exist'},status=status.HTTP_400_BAD_REQUEST)
+        serializer = ReaSerializer(rea)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 
 """...........Favorit(s) -Fav(s) for short- Management..........."""

@@ -20,7 +20,8 @@ class ReaSerializer(serializers.ModelSerializer):
     class Meta:
         model = RealEstateAdd
         fields = ['id','title','description','category','type','surface',
-        'price','pub_date','localisation','wilaya','commune','owner','photos']
+        'price','pub_date','localisation','wilaya','commune','owner','photos','longitude',
+        'latitude']
 
 
 class OfferSerializer(serializers.ModelSerializer):
