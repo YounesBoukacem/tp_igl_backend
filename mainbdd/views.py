@@ -336,7 +336,7 @@ def login(request):
     id_token = token.rsplit("Bearer ")[1]
 
     try:
-        claims = jwt.decode(id_token, verify=False) 
+        claims = gjwt.decode(id_token, verify=False) 
         token_valide = True
         user_data = {
         "first_name": claims["given_name"] ,
