@@ -15,6 +15,9 @@ urlpatterns=[
     path('rea_of_id/<int:rea_id>/', views.ReaOfId.as_view()),
     path('offers_of_rea/<int:rea_id>/', views.OffersOfRea.as_view()),
     path('offers_made_by_user/', views.OffersMadeByUser.as_view()),
-    path('posting_offer/<int:rea_id>/', views.PostingOffer.as_view())
+    path('offers_made_to_user/',views.OffersMadeToUser.as_view()),
+    path('posting_offer/<int:rea_id>/', views.PostingOffer.as_view()),
+    path('last/', views.lastRea.as_view())
+
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
