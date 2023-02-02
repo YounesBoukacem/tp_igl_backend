@@ -72,13 +72,4 @@ class Offer(models.Model):
         return self.description
 
 
-
-
-
-
-
-
-
-
-
 # Create your models here.

@@ -116,14 +116,13 @@ class ReasOfUser(APIView):
         rea.delete()
         return Response(status=status.HTTP_200_OK)
       
-
 """--->>>View for the search_for_reas endpoint"""          
 class SearchForReas(APIView):
 
     """->Gets all the reas corresponding to the search criteria"""
     """->Body contains: search_field, type, wilaya, commune, start_date, end_date"""
     """->start/end_date must be formated YYYY-MM-DD"""
-    def get(self, request, format=None):
+    def post(self, request, format=None):
 
         id_token  = request.headers.get('Authorization')
         try:
@@ -169,7 +168,27 @@ class ReaOfId(APIView):
         except RealEstateAdd.DoesNotExist:
             return Response({'detail':'Rea does not exist'},status=status.HTTP_400_BAD_REQUEST)
         serializer = ReaSerializer(rea)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        u = User.objects.filter(id = serializer.data['owner']).values()[0]
+        aa = {
+            "id": serializer.data["id"],
+            "title": serializer.data["title"],
+            "description": serializer.data["description"],
+            "category": serializer.data["category"],
+            "type": serializer.data["type"],
+            "surface": serializer.data["surface"],
+            "price": serializer.data["price"],
+            "pub_date":serializer.data["pub_date"],
+            "localisation": serializer.data["localisation"],
+            "wilaya": serializer.data["wilaya"],
+            "commune": serializer.data["commune"],
+            "owner":u,
+            "photos": serializer.data["photos"],
+            "longitude": serializer.data["longitude"],
+            "latitude": serializer.data["latitude"]
+            }
+
+        return Response(aa, status=status.HTTP_200_OK)
 
 
 
@@ -216,7 +235,7 @@ class FavsOfUser(APIView):
     
     """->Removes a rea from favorits of user defined by user_id url argument"""
     """->Body contains: rea_id"""
-    def delete(self, request, user_id, format=None):
+    def delete(self, request, format=None):
         id_token  = request.headers.get('Authorization')
         try:
             user = getUser(id_token)
@@ -254,6 +273,21 @@ class OffersMadeByUser(APIView):
         offers = Offer.objects.filter(offerer=user)
         serializer = OfferSerializer(offers, many=True)
         return Response(serializer.data, status=status.HTTP_302_FOUND)
+    
+
+"""--->>> View for offers_made_to_user endpoint"""
+class OffersMadeToUser(APIView):
+    """->Gets all the offers made to the user"""
+    def get(self, request, format=None):
+        id_token  = request.headers.get('Authorization')
+        try:
+            user = getUser(id_token)
+        except jwt.InvalidSignatureError:
+            return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
+
+        offers = Offer.objects.filter(real_estate__owner=user)
+        serializer=OfferSerializer(offers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 """--->>> View for posting_offer endpoint"""
@@ -311,8 +345,11 @@ class OffersOfRea(APIView):
    
 
         
-
-
+class lastRea(APIView):
+    def get(self, request, format=None):
+        last = RealEstateAdd.objects.all()[:6]
+        serializer = ReaSerializer(last, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 

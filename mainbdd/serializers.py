@@ -25,6 +25,7 @@ class ReaSerializer(serializers.ModelSerializer):
 
 
 class OfferSerializer(serializers.ModelSerializer):
+    offerer = UserSerializer()
     class Meta:
         model = Offer
         fields = ['id','description','proposal','offerer','real_estate']
