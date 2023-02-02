@@ -282,7 +282,7 @@ class OffersMadeToUser(APIView):
         except jwt.InvalidSignatureError:
             return Response({'detail':'User of user_id not found'},status=status.HTTP_400_BAD_REQUEST)
 
-        offers = Offer.objects.filter(real_estate__owner__id=user)
+        offers = Offer.objects.filter(real_estate__owner=user)
         serializer=OfferSerializer(offers, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
