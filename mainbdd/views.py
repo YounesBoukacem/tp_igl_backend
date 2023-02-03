@@ -2,13 +2,14 @@ from django.shortcuts import render
 from rest_framework.response import Response
 from django.views.decorators.csrf import csrf_exempt
 from .models import User, RealEstateAdd, Photo, Offer
-from .serializers import UserSerializer, ReaSerializer, OfferSerializer, PhotoSerializer
+from .serializers import UserSerializer, ReaSerializer, OfferSerializer, PhotoSerializer 
 from rest_framework.decorators import api_view
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser,FormParser
 from .custom_renderers import PNGRenderer
 from rest_framework.renderers import JSONRenderer
+from rest_framework import serializers
 
 
 
@@ -18,11 +19,17 @@ from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from google.auth import jwt as gjwt 
 
+from drf_spectacular.utils import extend_schema,OpenApiParameter
+
+
 
 
 
 
 class UserDetail(APIView):
+    @extend_schema(
+        responses = UserSerializer ,
+    )
     def get(self, request, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -50,6 +57,12 @@ class PostRea(APIView):
     
     """->Posts a rea for the user defined by the user_id url agrument"""
     """->Body contains: uploaded_photos, title, description, ... RealEstateAdd Model fields"""
+
+    @extend_schema(
+        responses = ReaSerializer,
+        request=ReaSerializer(),
+
+        )
     def post(self, request, format=None):
         files = request.FILES.getlist('uploaded_photos')
         if files:
@@ -80,6 +93,9 @@ class ReasOfUser(APIView):
     
    
     """->Gets all the reas of user defined by user_id url argument"""
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def get(self, request, format=None):
         id_token  = request.headers.get('Authorization')
         try:
@@ -122,6 +138,9 @@ class SearchForReas(APIView):
     """->Gets all the reas corresponding to the search criteria"""
     """->Body contains: search_field, type, wilaya, commune, start_date, end_date"""
     """->start/end_date must be formated YYYY-MM-DD"""
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def post(self, request, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -161,7 +180,9 @@ class SearchForReas(APIView):
 
 """--->>> View for rea_of_id endpoint"""
 class ReaOfId(APIView):
-    
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def get(self, request, rea_id, format=None):
         try:
             rea = RealEstateAdd.objects.get(pk=rea_id)
@@ -199,6 +220,9 @@ class ReaOfId(APIView):
 """--->>> View for favs_of_user endpoint"""   
 class FavsOfUser(APIView):
     """->Gets all the favorits of the user defined by user_id url argument"""
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def get(self, request, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -215,6 +239,7 @@ class FavsOfUser(APIView):
     
     """->Registers a new favorit for the user defined by user_id url argument"""
     """->Body contains: rea_id"""
+
     def post(self, request, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -262,6 +287,9 @@ class FavsOfUser(APIView):
 """--->>> View for offers_made_by_user endpoint"""
 class OffersMadeByUser(APIView):
     """->Gets all the offers made by the user defined by user_id"""
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def get(self, request, format=None):
         id_token  = request.headers.get('Authorization')
         try:
@@ -278,6 +306,9 @@ class OffersMadeByUser(APIView):
 """--->>> View for offers_made_to_user endpoint"""
 class OffersMadeToUser(APIView):
     """->Gets all the offers made to the user"""
+    @extend_schema(
+        responses = OfferSerializer,
+        )
     def get(self, request, format=None):
         id_token  = request.headers.get('Authorization')
         try:
@@ -295,6 +326,10 @@ class PostingOffer(APIView):
     
     """->Posts a new offers for the rea definde by rea_id url terminal"""
     """->Body contains : description, proposal"""
+    @extend_schema(
+        responses = OfferSerializer,
+        request = OfferSerializer
+        )
     def post(self, request, rea_id, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -325,6 +360,10 @@ class PostingOffer(APIView):
 class OffersOfRea(APIView):
     
     """->Gets the offers related to the rea defined by rea_id"""
+
+    @extend_schema(
+        responses = OfferSerializer,
+        )
     def get(self, request, rea_id, format=None):
 
         id_token  = request.headers.get('Authorization')
@@ -346,6 +385,9 @@ class OffersOfRea(APIView):
 
         
 class lastRea(APIView):
+    @extend_schema(
+        responses = ReaSerializer,
+        )
     def get(self, request, format=None):
         last = RealEstateAdd.objects.all()[:6]
         serializer = ReaSerializer(last, many=True)

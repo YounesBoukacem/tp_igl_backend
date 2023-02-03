@@ -1,0 +1,219 @@
+openapi: 3.0.3
+info:
+  title: Django DRF TPIGL
+  version: 0.0.0
+paths:
+  /auth/:
+    post:
+      operationId: auth_create
+      tags:
+      - auth
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /favs_of_user/:
+    get:
+      operationId: favs_of_user_retrieve
+      description: ->Gets all the favorits of the user defined by user_id url argument
+      tags:
+      - favs_of_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: favs_of_user_create
+      description: ->Gets all the favorits of the user defined by user_id url argument
+      tags:
+      - favs_of_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: favs_of_user_destroy
+      description: ->Gets all the favorits of the user defined by user_id url argument
+      tags:
+      - favs_of_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /last/:
+    get:
+      operationId: last_retrieve
+      tags:
+      - last
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /offers_made_by_user/:
+    get:
+      operationId: offers_made_by_user_retrieve
+      description: ->Gets all the offers made by the user defined by user_id
+      tags:
+      - offers_made_by_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /offers_made_to_user/:
+    get:
+      operationId: offers_made_to_user_retrieve
+      description: ->Gets all the offers made to the user
+      tags:
+      - offers_made_to_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /offers_of_rea/{rea_id}/:
+    get:
+      operationId: offers_of_rea_retrieve
+      description: ->Gets the offers related to the rea defined by rea_id
+      parameters:
+      - in: path
+        name: rea_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - offers_of_rea
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /post_rea/:
+    post:
+      operationId: post_rea_create
+      tags:
+      - post_rea
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /posting_offer/{rea_id}/:
+    post:
+      operationId: posting_offer_create
+      description: ->Posts a new offers for the rea definde by rea_id url terminal
+      parameters:
+      - in: path
+        name: rea_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - posting_offer
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /rea_of_id/{rea_id}/:
+    get:
+      operationId: rea_of_id_retrieve
+      parameters:
+      - in: path
+        name: rea_id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - rea_of_id
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /reas_of_user/:
+    get:
+      operationId: reas_of_user_retrieve
+      description: ->Gets all the reas of user defined by user_id url argument
+      tags:
+      - reas_of_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: reas_of_user_destroy
+      description: ->Gets all the reas of user defined by user_id url argument
+      tags:
+      - reas_of_user
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '204':
+          description: No response body
+  /search_for_reas/:
+    post:
+      operationId: search_for_reas_create
+      description: ->Gets all the reas corresponding to the search criteria
+      tags:
+      - search_for_reas
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /user_detail/:
+    get:
+      operationId: user_detail_retrieve
+      tags:
+      - user_detail
+      security:
+      - cookieAuth: []
+      - basicAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: sessionid
